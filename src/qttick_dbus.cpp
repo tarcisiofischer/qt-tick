@@ -1,10 +1,10 @@
 #include <QDebug>
 #include <QMetaEnum>
-#include <QWidget>
 #include <QMouseEvent>
 #include <QCoreApplication>
 #include <QApplication>
 #include <QAbstractButton>
+#include <QLineEdit>
 #include <qttick_dbus.h>
 
 QtTickDBus::QtTickDBus(QtTickEventListener &event_listener) : event_listener(event_listener)
@@ -13,9 +13,25 @@ QtTickDBus::QtTickDBus(QtTickEventListener &event_listener) : event_listener(eve
     connect(&this->event_listener, &QtTickEventListener::qtEventReceived, this, &QtTickDBus::forwardQtEventReceived);
 }
 
+// TODO: Proper error handling
+QDBusVariant QtTickDBus::invokeTickMethod(QString const& object_name, QString const& method_name)
+{
+    auto* object = this->findObjectFromName(object_name);
+    if (!object) {
+        return qvariant_cast<QDBusVariant>(false);
+    }
+
+    if (method_name == "QLineEdit::text") {
+        auto* lineedit = dynamic_cast<QLineEdit*>(object);
+        return QDBusVariant(lineedit->text());
+    }
+    return qvariant_cast<QDBusVariant>(false);
+}
+
+// TODO: Proper error handling
 bool QtTickDBus::invokeQtMethod(QString const& object_name, QString const& method_name)
 {
-    auto *object = this->findObjectFromName(object_name);
+    auto* object = this->findObjectFromName(object_name);
     if (!object) {
         return false;
     }

@@ -3,6 +3,7 @@
 
 #include <qttick_event_listener.h>
 #include <QObject>
+#include <QDBusVariant>
 
 class QtTickDBus : public QObject {
     Q_OBJECT
@@ -11,6 +12,7 @@ class QtTickDBus : public QObject {
 public:
     explicit QtTickDBus(QtTickEventListener &event_listener);
 
+    Q_SCRIPTABLE Q_SLOT QDBusVariant invokeTickMethod(QString const& object_name, QString const& method_name);
     Q_SCRIPTABLE Q_SLOT bool invokeQtMethod(QString const& object_name, QString const& method_name);
     Q_SCRIPTABLE Q_SLOT bool listenToQtEvents(QString const& event_name);
     Q_SCRIPTABLE Q_SIGNAL void qtEventReceived(QString const& event_name, QString const& class_name, QString const& object_name);
