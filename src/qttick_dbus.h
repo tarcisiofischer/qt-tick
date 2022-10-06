@@ -11,11 +11,14 @@ class QtTickDBus : public QObject {
 public:
     explicit QtTickDBus(QtTickEventListener &event_listener);
 
+    Q_SCRIPTABLE Q_SLOT bool invokeQtMethod(QString const& object_name, QString const& method_name);
     Q_SCRIPTABLE Q_SLOT bool listenToQtEvents(QString const& event_name);
     Q_SCRIPTABLE Q_SIGNAL void qtEventReceived(QString const& event_name, QString const& class_name, QString const& object_name);
 
 private:
-    void forwardQtEventReceived(QEvent::Type const& event, QString const& class_name, QString const& object_name);
+    void forwardQtEventReceived(QEvent::Type const& event_type, QString const& class_name, QString const& object_name);
+    QEvent::Type eventFromName(QString const& name) const;
+    QObject* findObjectFromName(QString const& name) const;
 
     QtTickEventListener &event_listener;
 };
