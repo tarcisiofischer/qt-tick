@@ -21,10 +21,8 @@ QDBusVariant QtTickDBus::invokeTickMethod(QString const& object_name, QString co
         return qvariant_cast<QDBusVariant>(false);
     }
 
-    if (method_name == "QLineEdit::text") {
-        auto* lineedit = dynamic_cast<QLineEdit*>(object);
-        return QDBusVariant(lineedit->text());
-    }
+    // TODO
+
     return qvariant_cast<QDBusVariant>(false);
 }
 
@@ -35,7 +33,17 @@ bool QtTickDBus::invokeQtMethod(QString const& object_name, QString const& metho
     if (!object) {
         return false;
     }
-    return QMetaObject::invokeMethod(object, method_name.toStdString().c_str());
+    return QMetaObject::invokeMethod(object, method_name.toLatin1());
+}
+
+// TODO: Proper error handling
+QDBusVariant QtTickDBus::getQtProperty(QString const& object_name, QString const& property_name)
+{
+    auto* object = this->findObjectFromName(object_name);
+    if (!object) {
+        return qvariant_cast<QDBusVariant>(false);
+    }
+    return QDBusVariant{object->property(property_name.toLatin1())};
 }
 
 bool QtTickDBus::listenToQtEvents(QString const& event_name)
@@ -50,9 +58,8 @@ bool QtTickDBus::listenToQtEvents(QString const& event_name)
 
 QEvent::Type QtTickDBus::eventFromName(QString const& name) const
 {
-    auto const& std_string = name.toStdString();
-    auto meta_enum = QMetaEnum::fromType<QEvent::Type>();
-    auto enum_value = meta_enum.keyToValue(std_string.c_str());
+    auto const meta_enum = QMetaEnum::fromType<QEvent::Type>();
+    auto const enum_value = meta_enum.keyToValue(name.toLatin1());
     if (enum_value == -1) {
         return QEvent::Type::None;
     }
@@ -61,7 +68,7 @@ QEvent::Type QtTickDBus::eventFromName(QString const& name) const
 
 void QtTickDBus::forwardQtEventReceived(QEvent::Type const& event_type, QString const& class_name, QString const& object_name)
 {
-    auto meta_enum = QMetaEnum::fromType<QEvent::Type>();
+    auto const meta_enum = QMetaEnum::fromType<QEvent::Type>();
     Q_EMIT this->qtEventReceived(meta_enum.valueToKey(static_cast<int>(event_type)), class_name, object_name);
 }
 

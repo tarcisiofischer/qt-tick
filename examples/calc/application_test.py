@@ -31,4 +31,4 @@ def test_application(runapp):
     proxy.invokeQtMethod('btn_+', 'click')
     proxy.invokeQtMethod('btn_2', 'click')
     proxy.invokeQtMethod('btn_=', 'click')
-    assert proxy.invokeTickMethod('output', 'QLineEdit::text') == '42'
+    assert proxy.getQtProperty('output', 'text') == '42'
