@@ -1,0 +1,32 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="qt_tick.QtTickInterface">
+    <signal name="qtEventReceived">
+      <arg name="event_name" type="s" direction="out"/>
+      <arg name="class_name" type="s" direction="out"/>
+      <arg name="object_name" type="s" direction="out"/>
+    </signal>
+    <method name="invokePluginMethod">
+      <arg type="v" direction="out"/>
+      <arg name="plugin_name" type="s" direction="in"/>
+      <arg name="method_name" type="s" direction="in"/>
+    </method>
+    <method name="invokeQtMethod">
+      <arg name="object_name" type="s" direction="in"/>
+      <arg name="method_name" type="s" direction="in"/>
+    </method>
+    <method name="triggerQtEvent">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
+      <arg name="object_name" type="s" direction="in"/>
+      <arg name="event_metadata" type="a{sv}" direction="in"/>
+    </method>
+    <method name="getQtProperty">
+      <arg type="v" direction="out"/>
+      <arg name="object_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+    </method>
+    <method name="listenToQtEvents">
+      <arg name="event_name" type="s" direction="in"/>
+    </method>
+  </interface>
+</node>

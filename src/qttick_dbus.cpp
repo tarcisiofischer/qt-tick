@@ -5,6 +5,8 @@
 #include <QApplication>
 #include <QAbstractButton>
 #include <QLineEdit>
+#include <QMenu>
+#include <QDBusArgument>
 #include <qttick_dbus.h>
 
 QtTickDBus::QtTickDBus(QtTickEventListener &event_listener) : event_listener(event_listener)
@@ -13,36 +15,35 @@ QtTickDBus::QtTickDBus(QtTickEventListener &event_listener) : event_listener(eve
     connect(&this->event_listener, &QtTickEventListener::qtEventReceived, this, &QtTickDBus::forwardQtEventReceived);
 }
 
-// TODO: Proper error handling
-QDBusVariant QtTickDBus::invokeTickMethod(QString const& object_name, QString const& method_name)
+QDBusVariant QtTickDBus::invokePluginMethod(QString const& plugin_name, QString const& method_name)
 {
-    auto* object = this->findObjectFromName(object_name);
-    if (!object) {
-        return qvariant_cast<QDBusVariant>(false);
-    }
-
     // TODO
-
     return qvariant_cast<QDBusVariant>(false);
 }
 
-// TODO: Proper error handling
-bool QtTickDBus::invokeQtMethod(QString const& object_name, QString const& method_name)
+// TODO: Should it be the QEVent itself instead of a QVariantMap? If yes, how to make a clone of an event in qt<6?
+void QtTickDBus::triggerQtEvent(QString const& object_name, QVariantMap const& event_metadata)
 {
     auto* object = this->findObjectFromName(object_name);
-    if (!object) {
-        return false;
+    auto event_type_str = event_metadata["event_type"].toString();
+    if (event_type_str == "MouseButtonPress" || event_type_str == "MouseButtonRelease") {
+        this->triggerQtMouseEvent(object, event_metadata);
+    } else {
+        throw QTTickDbusError("No handler to qt event named \"" + event_type_str.toStdString() + "\"");
     }
-    return QMetaObject::invokeMethod(object, method_name.toLatin1());
 }
 
-// TODO: Proper error handling
+void QtTickDBus::invokeQtMethod(QString const& object_name, QString const& method_name)
+{
+    auto* object = this->findObjectFromName(object_name);
+    if (!QMetaObject::invokeMethod(object, method_name.toLatin1())) {
+        throw QTTickDbusError("Could not invoke method " + method_name.toStdString() + " in object " + object_name.toStdString());
+    }
+}
+
 QDBusVariant QtTickDBus::getQtProperty(QString const& object_name, QString const& property_name)
 {
     auto* object = this->findObjectFromName(object_name);
-    if (!object) {
-        return qvariant_cast<QDBusVariant>(false);
-    }
     return QDBusVariant{object->property(property_name.toLatin1())};
 }
 
@@ -94,5 +95,34 @@ QObject* QtTickDBus::findObjectFromName(QString const& name) const
             return foundObj;
         }
     }
+    throw QTTickDbusError("Couldn't find object named " + name.toStdString());
     return nullptr;
+}
+
+void QtTickDBus::triggerQtMouseEvent(QObject* object, QVariantMap const& event_metadata)
+{
+    auto event_type_str = event_metadata["event_type"].toString();
+    auto event_type = [&]() {
+        if (event_type_str == "MouseButtonPress") {
+            return QEvent::MouseButtonPress;
+        } else if (event_type_str == "MouseButtonRelease") {
+            return QEvent::MouseButtonRelease;
+        }
+        throw QTTickDbusError("Unknown event type " + event_type_str.toStdString());
+    }();
+    auto local_pos = QPointF{event_metadata["local_pos_x"].toDouble(), event_metadata["local_pos_y"].toDouble()};
+    auto mouse_button = [&]() {
+        auto btnString = event_metadata["mouse_button"].toString();
+        if (btnString == "LeftButton") {
+            return Qt::MouseButton::LeftButton;
+        } else if (btnString == "RightButton") {
+            return Qt::MouseButton::RightButton;
+        } else if (btnString == "MiddleButton") {
+            return Qt::MouseButton::MiddleButton;
+        }
+        throw QTTickDbusError("Unknown button type " + btnString.toStdString());
+    }();
+    auto modifiers = Qt::KeyboardModifier::NoModifier;
+    auto event = new QMouseEvent(event_type, local_pos, mouse_button, mouse_button, modifiers);
+    QApplication::postEvent(object, event);
 }

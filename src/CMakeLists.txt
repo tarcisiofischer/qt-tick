@@ -12,11 +12,7 @@ qt5_wrap_cpp(qt_tick_SRC
     qttick_event_listener.h
 )
 
-qt5_generate_dbus_interface(
-    qttick_dbus.h
-    ${qt_tick_DBUS_XML}
-    OPTIONS -s -m
-)
+configure_file(${qt_tick_DBUS_XML} ${CMAKE_CURRENT_BINARY_DIR}/${qt_tick_DBUS_XML} COPYONLY)
 
 qt5_add_dbus_adaptor(qt_tick_DBUS_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/${qt_tick_DBUS_XML}
